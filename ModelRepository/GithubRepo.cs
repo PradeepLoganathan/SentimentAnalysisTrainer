@@ -1,12 +1,12 @@
 
 using Octokit;
-using Octokit.Models.Response;
 using System;
 using System.IO;
 using System.Threading.Tasks;
-using System.Text.Encodings;
-using System.Collections.Generic;
 using System.Net.Http;
+using Azure.Storage.Blobs;
+using System.IO.Compression;
+
 
 namespace ModelRepository;
 public class Github
@@ -65,11 +65,27 @@ public class Github
         }
     }
 
+    public async Task UploadBlobStore(string filePath)
+    {
+        string connectionString = "DefaultEndpointsProtocol=https;AccountName=modelrepositoryprod;AccountKey=/oRe/ytUUWwonN3kZ9YtPytHKCav+SizB6516u/6We9yxOU9cz3Z7ZforJE6OUssYMW4eQItB09h+AStk38oVA==;EndpointSuffix=core.windows.net";
+        string containerName = "modelrepositoryprod";
+        string blobName = "sentimentanalysismodel";
+
+        BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
+        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+
+        using (FileStream zipStream = new FileStream(filePath, System.IO.FileMode.Open))
+        {
+            BlobClient blobClient = containerClient.GetBlobClient(blobName);
+            await blobClient.UploadAsync(zipStream, true);
+        }
+    }
+
     public async Task CreateZip(string filePath)
     {
         try
         {
-                var zipFile = File.ReadAllBytes(filePath);
+            var zipFile = File.ReadAllBytes(filePath);
             var base64String = Convert.ToBase64String(zipFile);
 
             var newBlob = new NewBlob
@@ -105,7 +121,7 @@ public class Github
                         "Hello World!",
                         createdTree.Sha,
                         new[] { master.Object.Sha })
-                        { Author = new Committer("PradeepLoganathan", "mytestemail@ztc.xom", DateTime.UtcNow) };
+            { Author = new Committer("PradeepLoganathan", "mytestemail@ztc.xom", DateTime.UtcNow) };
 
             var createdCommit = await _client.Git.Commit
             .Create(_owner, _repoName, newCommit);
@@ -118,7 +134,7 @@ public class Github
             Console.WriteLine(e.ToString());
             throw;
         }
-        
+
 
     }
 

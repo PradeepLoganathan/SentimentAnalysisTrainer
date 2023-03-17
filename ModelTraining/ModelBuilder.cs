@@ -80,9 +80,10 @@ internal class ModelBuilder
 
     public async Task SaveModel()
     {
-        mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
-        //await modelRepo.CreateZip(modelPath);
-        await modelRepo.CreateModelRelease(modelPath);
+       // mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
+       await modelRepo.UploadBlobStore(modelPath);
+        // await modelRepo.CreateZip(modelPath);
+        // await modelRepo.CreateModelRelease(modelPath);
     }
 
 }
