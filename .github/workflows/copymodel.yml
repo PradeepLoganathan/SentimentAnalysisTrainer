@@ -1,0 +1,21 @@
+name: Copy Files
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  copy-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Copy README.md
+        uses: dmnemec/copy_file_to_another_repo_action@main
+        with:
+          source_file: "MLModels/SentimentModel.zip"
+          destination_repo: "PradeepLoganathan/ModelRepository"
+          destination_folder: "SentimentAnalysis"
+          user_email: "pradeep@pradeeploganathan.com"
+          user_name: "pradeep loganathan"
+          commit_message: "Update model"
+          github_token: ${{ secrets.TOKEN }}
