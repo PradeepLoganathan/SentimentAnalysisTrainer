@@ -16,31 +16,31 @@ namespace ModelTraining;
 internal class ModelBuilder
 {
     MLContext mlContext;
-    string wikiDetoxRepoPath = @"Data/wikiDetoxAnnotated40kRows.tsv";
-    string wikiDetoxLocalFilePath = "wikiDetoxAnnotated40kRows.tsv";
-    string modelPath = "SentimentModel.zip";
-    IDataView dataView;
-    IDataView trainingData;
-    IDataView testData;
+    string wikiDetoxRepoPath, wikiDetoxLocalFilePath, modelPath;
+    IDataView dataView, trainingData, testData;
     ITransformer trainedModel;
-
     Github trainingDataRepo, modelRepo;
-
     private TextFeaturizingEstimator dataProcessPipeline;
 
-    public ModelBuilder(Github TrainingDataRepo, Github ModelRepo)
+    public ModelBuilder(Github TrainingDataRepo, Github ModelRepo):this()
     {
         trainingDataRepo = TrainingDataRepo;
         modelRepo = ModelRepo;
         mlContext = new MLContext(seed: 1);
     }
 
+    public ModelBuilder()
+    {
+        wikiDetoxRepoPath = @"Data/wikiDetoxAnnotated40kRows.tsv";
+        wikiDetoxLocalFilePath = "wikiDetoxAnnotated40kRows.tsv";
+        modelPath = "SentimentModel.zip";
+
+    }
+
     public async Task LoadTrainingData()
     {
 
         await trainingDataRepo.ReadFile(wikiDetoxRepoPath, wikiDetoxLocalFilePath);
-        //File.WriteAllText(wikiDetoxFilePath, contents);
-
         dataView = mlContext.Data.LoadFromTextFile<SentimentIssue>(wikiDetoxLocalFilePath, hasHeader: true);
     }
 
@@ -80,14 +80,9 @@ internal class ModelBuilder
 
     public async Task SaveModel()
     {
-        //mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
-        // var content = File.ReadAllText(ModelPath);
-        // await ghClient.Repository.Content.CreateFile(owner, name, path, new CreateFileRequest("SentimentAnalysis model updated", content));
-
-        // Console.WriteLine("The model is saved to {0}", ModelPath);
-
         mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
-        await modelRepo.CreateZip(modelPath);
+        //await modelRepo.CreateZip(modelPath);
+        await modelRepo.CreateModelRelease(modelPath);
     }
 
 }

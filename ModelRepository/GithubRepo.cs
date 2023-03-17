@@ -116,6 +116,24 @@ public class Github
 
     }
 
+    public async Task CreateModelRelease(string modelPath)
+    {
+        using (var archiveContents = File.OpenRead(modelPath))
+        {
+            var assetUpload = new ReleaseAssetUpload()
+            {
+                FileName = modelPath,
+                ContentType = "application/zip",
+                RawData = archiveContents
+            };
+
+            var releases = await _client.Repository.Release.GetAll(_owner, _repoName);
+            //var latest = releases[0];
+            var release = await _client.Repository.Release.Create(_owner, _repoName, new NewRelease(".") );
+            var asset = await _client.Repository.Release.UploadAsset(release, assetUpload);
+        }
+    }
+
     public async Task UpdateFile(string filePath, string fileContent,
         string commitMessage)
     {
@@ -172,7 +190,7 @@ public class Github
             }
 
             Console.WriteLine($"Read file {localFilePath} from {_owner}/{_repoName}.");
-            
+
         }
         catch (Exception ex)
         {
