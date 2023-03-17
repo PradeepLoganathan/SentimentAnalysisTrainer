@@ -27,6 +27,8 @@ namespace SentimentAnalysisConsoleApp
             modelRepo.SetRepo("PradeepLoganathan", "ModelRepository");
 
             ModelBuilder modelBuilder = new ModelBuilder(trainingDataRepo, modelRepo);
+            await modelBuilder.SaveModel();
+            
             await modelBuilder.LoadTrainingData();
             modelBuilder.TrainTestSplit();
             modelBuilder.PrepareData();
