@@ -1,10 +1,21 @@
-- name: Copy files to another repository
-  uses: nkoppel/push-files-to-another-repository@v1.1.1
-  env:
-    API_TOKEN_GITHUB: ${{ secrets.API_TOKEN_GITHUB }}
-  with:
-    source-files: 'webpage/'
-    destination-username: 'nkoppel'
-    destination-repository: 'nkoppel.github.io'
-    destination-directory: 'projects/my-project'
-    commit-email: 'nathankoppel0@gmail.com'
+name: Copy Files
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  copy-files:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: Push generated file to another repository
+        uses: nkoppel/push-files-to-another-repository@1.1.0
+        env:
+          API_TOKEN_GITHUB: ${{ secrets.TOKEN }}
+        with:
+          source-files: 'MLModels/SentimentModel.zip'
+          destination-username: 'PradeepLoganathan'
+          destination-repository: 'ModelRepository'
+          destination-directory: 'SentimentAnalysis'
+          commit-email: 'pradeep@gmail.com'
