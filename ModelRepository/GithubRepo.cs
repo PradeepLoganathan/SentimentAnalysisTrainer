@@ -67,71 +67,127 @@ public class Github
 
     public async Task CreateZip(string filePath)
     {
-        var zipFile = File.ReadAllBytes(filePath);
-        var base64String = Convert.ToBase64String(zipFile);
-
-        var newBlob = new NewBlob
+        try
         {
-            Content = base64String,
-            Encoding = EncodingType.Base64
-        };
+                var zipFile = File.ReadAllBytes(filePath);
+            var base64String = Convert.ToBase64String(zipFile);
+
+            var newBlob = new NewBlob
+            {
+                Content = base64String,
+                Encoding = EncodingType.Base64
+            };
 
 
-        var blob = await _client.Git.Blob.Create(_owner, _repoName, newBlob);
-        var branchRef = await _client.Git.Reference.Get(_owner, _repoName, $"heads/{_branch}");
-        var latestCommit = await _client.Git.Commit.Get(_owner, _repoName, branchRef.Object.Sha);
+            var blob = await _client.Git.Blob.Create(_owner, _repoName, newBlob);
+            // var branchRef = await _client.Git.Reference.Get(_owner, _repoName, $"heads/{_branch}");
+            // var latestCommit = await _client.Git.Commit.Get(_owner, _repoName, branchRef.Object.Sha);
 
 
-        var newTree = new NewTree();
-        newTree.Tree.Add(new NewTreeItem
+            var newTree = new NewTree();
+            newTree.Tree.Add(new NewTreeItem
+            {
+                Type = TreeType.Blob,
+                Mode = Octokit.FileMode.File,
+                Path = "SentimentAnalysisModel.zip",
+                Sha = blob.Sha
+            });
+
+
+            // Create a tree using this request 
+            var createdTree =
+                await _client.Git.Tree.Create(_owner, _repoName, newTree);
+
+            var master = await _client.Git.Reference
+            .Get(_owner, _repoName, "heads/master");
+
+            var newCommit = new NewCommit(
+                        "Hello World!",
+                        createdTree.Sha,
+                        new[] { master.Object.Sha })
+                        { Author = new Committer("PradeepLoganathan", "mytestemail@ztc.xom", DateTime.UtcNow) };
+
+            var createdCommit = await _client.Git.Commit
+            .Create(_owner, _repoName, newCommit);
+
+            var updateReference = new ReferenceUpdate(createdCommit.Sha);
+            var updatedReference = await _client.Git.Reference.Update(_owner, _repoName, "heads/master", updateReference);
+        }
+        catch (System.Exception e)
         {
-            Type = TreeType.Blob,
-            Mode = Octokit.FileMode.File,
-            Path = "SentimentAnalysisModel.zip",
-            Sha = blob.Sha
-        });
-
-
-        // Create a tree using this request 
-        var treeResponse =
-            await _client.Git.Tree.Create(_owner, _repoName, newTree);
-
-        // Create a commit for this tree and set its parent as current commit 
-        var commitRequest =
-            new NewCommit("Add my-zip-file.zip",
-                          treeResponse.Sha,
-                          latestCommit.Sha);
-
-        // Create this commit 
-        var commit =
-            await _client.Git.Commit.Create(_owner,
-                                           _repoName,
-                                           commitRequest);
-
-        // Update HEAD with this commit 
-        var referece = await _client.Git.Reference.Update(_owner,
-                                           _repoName,
-                                           $"heads/{_branch}",
-                                           new ReferenceUpdate(commit.Sha));
+            Console.WriteLine(e.ToString());
+            throw;
+        }
+        
 
     }
 
     public async Task CreateModelRelease(string modelPath)
     {
-        using (var archiveContents = File.OpenRead(modelPath))
+        try
         {
-            var assetUpload = new ReleaseAssetUpload()
+            using (var archiveContents = File.OpenRead(modelPath))
             {
-                FileName = modelPath,
-                ContentType = "application/zip",
-                RawData = archiveContents
-            };
+                var assetUpload = new ReleaseAssetUpload()
+                {
+                    FileName = modelPath,
+                    ContentType = "application/zip",
+                    RawData = archiveContents
+                };
 
-            var releases = await _client.Repository.Release.GetAll(_owner, _repoName);
-            //var latest = releases[0];
-            var release = await _client.Repository.Release.Create(_owner, _repoName, new NewRelease(".") );
-            var asset = await _client.Repository.Release.UploadAsset(release, assetUpload);
+                var releases = await _client.Repository.Release.GetAll(_owner, _repoName);
+                NewRelease newRelease;
+
+                if (releases.Count == 0)
+                {
+                    newRelease = new NewRelease("v1.0.0");
+                    newRelease.Name = "Version One Point Oh";
+                    newRelease.Body = "This is the first release of the model";
+                    newRelease.Draft = false;
+                    newRelease.Prerelease = false;
+
+                }
+                else
+                {
+                    var latest = releases[0].TagName;
+                    string[] versionParts = latest.Split('.');
+                    int major = int.Parse(versionParts[0].Substring(1));
+                    int minor = int.Parse(versionParts[1]);
+                    int build = int.Parse(versionParts[2]);
+                    build++;
+                    string newVersion = $"v{major}.{minor}.{build}";
+
+                    string[] numbers = new string[] { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine" };
+                    string majorWord = numbers[major];
+                    string minorWord = numbers[minor];
+                    string buildWord = numbers[build];
+
+                    string versionWord = $"v{majorWord}.{minorWord}.{buildWord}";
+
+                    newRelease = new NewRelease(newVersion);
+                    newRelease.Name = versionWord;
+                    newRelease.Body = "This is the {versionWord} release of the model";
+                    newRelease.Draft = false;
+                    newRelease.Prerelease = false;
+
+                }
+
+
+                var release = await _client.Repository.Release.Create(_owner, _repoName, newRelease);
+                var asset = await _client.Repository.Release.UploadAsset(release, assetUpload);
+            }
         }
+        catch (Octokit.ApiValidationException octovalException)
+        {
+            Console.WriteLine(octovalException.ToString());
+            throw;
+        }
+        catch (System.Exception)
+        {
+
+            throw;
+        }
+
     }
 
     public async Task UpdateFile(string filePath, string fileContent,
