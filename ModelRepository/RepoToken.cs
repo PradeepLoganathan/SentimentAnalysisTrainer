@@ -1,4 +1,4 @@
-namespace Common;
+namespace ModelRepository;
 
 internal class RepoToken
 {

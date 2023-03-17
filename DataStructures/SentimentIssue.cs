@@ -1,8 +1,5 @@
-﻿
-using Microsoft.ML.Data;
-
-namespace SentimentAnalysisConsoleApp.DataStructures
-{
+﻿using Microsoft.ML.Data;
+namespace DataStructures;
     public class SentimentIssue
     {
         [LoadColumn(0)]
@@ -10,4 +7,3 @@ namespace SentimentAnalysisConsoleApp.DataStructures
         [LoadColumn(2)]
         public string Text { get; set; }
     }
-}
