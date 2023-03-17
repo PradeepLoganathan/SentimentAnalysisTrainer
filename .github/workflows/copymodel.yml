@@ -1,21 +1,22 @@
-name: Copy Files
+name: Push File
 
-on:
-  push:
-    branches: [ main ]
+on: push
 
 jobs:
-  copy-files:
+  copy-file:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v2
-      - name: Push generated file to another repository
-        uses: nkoppel/push-files-to-another-repository@v1.1.1
-        env:
-          API_TOKEN_GITHUB: ${{ secrets.TOKEN }}
-        with:
-          source-files: 'MLModels/SentimentModel.zip'
-          destination-username: 'PradeepLoganathan'
-          destination-repository: 'ModelRepository'
-          destination-directory: 'SentimentAnalysis'
-          commit-email: 'pradeep@gmail.com'
+    - name: Checkout
+      uses: actions/checkout@v2
+
+    - name: Pushes test file
+      uses: dmnemec/copy_file_to_another_repo_action@main
+      env:
+        API_TOKEN_GITHUB: ${{ secrets.TOKEN }}
+      with:
+        source_file: 'MLModels/SentimentModel.zip'
+        destination_repo: 'PradeepLoganathan/ModelRepository'
+        destination_folder: 'SentimentAnalysis'
+        user_email: 'pradeep@email.com'
+        user_name: 'pradeeploganathan'
+        commit_message: 'A custom message for the commit'
