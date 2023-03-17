@@ -6,15 +6,12 @@ using Common;
 using static Microsoft.ML.DataOperationsCatalog;
 using Microsoft.ML.Trainers;
 using System.Net.Http;
+using System.Threading.Tasks;
 
 namespace SentimentAnalysisConsoleApp
 {
     internal static class Program
     {
-        private static readonly string BaseDatasetsRelativePath = @"Data";
-        private static readonly string DataRelativePath = $"{BaseDatasetsRelativePath}/wikiDetoxAnnotated40kRows.tsv";
-
-        private static readonly string DataPath = GetAbsolutePath(DataRelativePath);
 
         private static readonly string BaseModelsRelativePath = @"../../../MLModels";
         private static readonly string ModelRelativePath = $"{BaseModelsRelativePath}/SentimentModel.zip";
@@ -23,8 +20,30 @@ namespace SentimentAnalysisConsoleApp
 
         private static string wikiDetoxPath = "wikiDetoxAnnotated40kRows.tsv";
 
-        static async void Main(string[] args)
+        static async Task Main(string[] args)
         {
+            SettingsReader settingsReader = new SettingsReader();
+            var repoToken = settingsReader.ReadSection<RepoToken>("GithubToken");
+
+            // Create an instance of the GitHubFileHandler class with your credentials
+            var handler = new Github(repoToken.Token);
+            // Set the repo you want to work with
+            handler.SetRepo("PradeepLoganathan", "ModelRepository");
+
+            // Create a file in the repo
+            await handler.CreateFile("test.txt", "Hello world!", "Create test file");
+            // Update the file in the repo
+            await handler.UpdateFile("test.txt", "Hello GitHub!", "Update test file");
+            // Read the file from the repo
+            var content = await handler.ReadFile("test.txt");
+            Console.WriteLine($"The content of test.txt is: {content}");
+            // Delete the file from the repo
+            await handler.DeleteFile("test.txt", "Delete test file");
+            
+
+           
+
+
             // Create MLContext 
             // Set a random seed for repeatable/deterministic results across multiple trainings.
             var mlContext = new MLContext(seed: 1);
@@ -57,6 +76,8 @@ namespace SentimentAnalysisConsoleApp
 
             // Persist the trained model to a .ZIP file
             mlContext.Model.Save(trainedModel, trainingData.Schema, ModelPath);
+            var content = File.ReadAllText(ModelPath);
+            await ghClient.Repository.Content.CreateFile(owner, name, path, new CreateFileRequest("SentimentAnalysis model updated", content));
 
             Console.WriteLine("The model is saved to {0}", ModelPath);
 
