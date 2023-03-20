@@ -1,14 +1,13 @@
-using System;
-using System.IO;
-using System.Net.Http;
 using System.Threading.Tasks;
+using System.Linq;
+using System.IO;
+
 using Common;
 using DataStructures;
 using Microsoft.ML;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms.Text;
 using ModelRepository;
-using Octokit;
 using static Microsoft.ML.DataOperationsCatalog;
 
 namespace ModelTraining;
@@ -16,11 +15,13 @@ namespace ModelTraining;
 internal class ModelBuilder
 {
     MLContext mlContext;
-    string wikiDetoxRepoPath, wikiDetoxLocalFilePath, modelPath;
+    string wikiDetoxRepoPath, wikiDetoxLocalFilePath, modelPath, metricPath;
     IDataView dataView, trainingData, testData;
     ITransformer trainedModel;
     Github trainingDataRepo, modelRepo;
-    private TextFeaturizingEstimator dataProcessPipeline;
+    TextFeaturizingEstimator dataProcessPipeline;
+
+    SdcaLogisticRegressionBinaryTrainer trainer;
 
     public ModelBuilder(Github TrainingDataRepo, Github ModelRepo):this()
     {
@@ -34,6 +35,7 @@ internal class ModelBuilder
         wikiDetoxRepoPath = @"Data/wikiDetoxAnnotated40kRows.tsv";
         wikiDetoxLocalFilePath = "wikiDetoxAnnotated40kRows.tsv";
         modelPath = "SentimentModel.zip";
+        metricPath = "SentimentModel-Metrics.txt";
 
     }
 
@@ -60,15 +62,15 @@ internal class ModelBuilder
     public void Train()
     {
         // Select algorithm and configure model builder                            
-        var trainer = mlContext.BinaryClassification.Trainers.SdcaLogisticRegression(labelColumnName: "Label", featureColumnName: "Features");
+        trainer = mlContext.BinaryClassification.Trainers.SdcaLogisticRegression(labelColumnName: "Label", featureColumnName: "Features");
         var trainingPipeline = dataProcessPipeline.Append(trainer);
 
         // Train the model
         trainedModel = trainingPipeline.Fit(trainingData);
-        EvaluateModel(mlContext, testData, trainer, trainedModel);
+        
     }
 
-    public void EvaluateModel(MLContext mlContext, IDataView testData, SdcaLogisticRegressionBinaryTrainer trainer, ITransformer trainedModel)
+    public void PrintModelMetrics()
     {
         // Evaluate the model
         var predictions = trainedModel.Transform(testData);
@@ -78,10 +80,21 @@ internal class ModelBuilder
         ConsoleHelper.PrintBinaryClassificationMetrics(trainer.ToString(), metrics);
     }
 
+    public void SaveModelMetrics()
+    {
+        // Evaluate the model
+        var predictions = trainedModel.Transform(testData);
+        var metrics = mlContext.BinaryClassification.Evaluate(data: predictions, labelColumnName: "Label", scoreColumnName: "Score");
+
+        // Display model accuracy stats
+        var metricdetails = ConsoleHelper.GetBinaryClassificationMetrics(trainer.ToString(), metrics);
+        File.WriteAllLines(metricPath, metricdetails);
+    }
+
     public async Task SaveModel()
     {
        // mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
-       await modelRepo.UploadBlobStore(modelPath);
+       await modelRepo.UploadBlobStore(modelPath, metricPath);
         // await modelRepo.CreateZip(modelPath);
         // await modelRepo.CreateModelRelease(modelPath);
     }

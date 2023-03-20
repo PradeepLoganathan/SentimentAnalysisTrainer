@@ -1,0 +1,14 @@
+************************************************************
+*       Metrics for Microsoft.ML.Trainers.SdcaLogisticRegressionBinaryTrainer binary classification model      
+*-----------------------------------------------------------
+*       Accuracy: 94.64 %
+*       Area Under Curve:      93.97 %
+*       Area under Precision recall Curve:  77.11 %
+*       F1Score:  62.47 %
+*       LogLoss:  .22
+*       LogLossReduction:  .52
+*       PositivePrecision:  .92
+*       PositiveRecall:  .47
+*       NegativePrecision:  .95
+*       NegativeRecall:  99.54 %
+************************************************************

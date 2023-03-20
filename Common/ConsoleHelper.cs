@@ -38,6 +38,28 @@ public static class ConsoleHelper
         Console.WriteLine($"*************************************************");
     }
 
+    public static string[] GetBinaryClassificationMetrics(string name, CalibratedBinaryClassificationMetrics metrics)
+    {
+        string[] lines = new string[]
+                {
+                    $"************************************************************",
+                    $"*       Metrics for {name} binary classification model      ",
+                    $"*-----------------------------------------------------------",
+                    $"*       Accuracy: {metrics.Accuracy:P2}",
+                    $"*       Area Under Curve:      {metrics.AreaUnderRocCurve:P2}",
+                    $"*       Area under Precision recall Curve:  {metrics.AreaUnderPrecisionRecallCurve:P2}",
+                    $"*       F1Score:  {metrics.F1Score:P2}",
+                    $"*       LogLoss:  {metrics.LogLoss:#.##}",
+                    $"*       LogLossReduction:  {metrics.LogLossReduction:#.##}",
+                    $"*       PositivePrecision:  {metrics.PositivePrecision:#.##}",
+                    $"*       PositiveRecall:  {metrics.PositiveRecall:#.##}",
+                    $"*       NegativePrecision:  {metrics.NegativePrecision:#.##}",
+                    $"*       NegativeRecall:  {metrics.NegativeRecall:P2}",
+                    $"************************************************************",
+                };
+        return lines;
+    }
+
     public static void PrintBinaryClassificationMetrics(string name, CalibratedBinaryClassificationMetrics metrics)
     {
         Console.WriteLine($"************************************************************");

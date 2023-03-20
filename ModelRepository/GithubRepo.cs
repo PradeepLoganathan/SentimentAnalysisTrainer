@@ -65,19 +65,31 @@ public class Github
         }
     }
 
-    public async Task UploadBlobStore(string filePath)
+    public async Task UploadBlobStore(string modelPath, string metricPath)
     {
         string connectionString = "DefaultEndpointsProtocol=https;AccountName=modelrepositoryprod;AccountKey=/oRe/ytUUWwonN3kZ9YtPytHKCav+SizB6516u/6We9yxOU9cz3Z7ZforJE6OUssYMW4eQItB09h+AStk38oVA==;EndpointSuffix=core.windows.net";
-        string containerName = "modelrepositoryprod";
-        string blobName = "sentimentanalysismodel";
+        string modelContainerName = "modelrepositoryprod";
+        string modelBlobName = "sentimentanalysismodel";
+
+        string metricContainerName = "modelrepositoryprod-metrics";
+        string metricBlobName = "sentimentanalysismodel-metrics";
 
         BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
-        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(containerName);
+        BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(modelContainerName);
 
-        using (FileStream zipStream = new FileStream(filePath, System.IO.FileMode.Open))
+        using (FileStream zipStream = new FileStream(modelPath, System.IO.FileMode.Open))
         {
-            BlobClient blobClient = containerClient.GetBlobClient(blobName);
+            BlobClient blobClient = containerClient.GetBlobClient(modelBlobName);
             await blobClient.UploadAsync(zipStream, true);
+        }
+
+        BlobServiceClient metricBlobServiceClient = new BlobServiceClient(connectionString);
+        BlobContainerClient metricContainerClient = metricBlobServiceClient.GetBlobContainerClient(metricContainerName);
+
+        using (FileStream zipStream = new FileStream(metricPath, System.IO.FileMode.Open))
+        {
+            BlobClient blobClient = metricContainerClient.GetBlobClient(metricBlobName);
+            await blobClient.UploadAsync(metricPath, true);
         }
     }
 

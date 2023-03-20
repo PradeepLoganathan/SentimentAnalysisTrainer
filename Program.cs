@@ -33,6 +33,8 @@ namespace SentimentAnalysisConsoleApp
             modelBuilder.TrainTestSplit();
             modelBuilder.PrepareData();
             modelBuilder.Train();
+            modelBuilder.PrintModelMetrics();
+            modelBuilder.SaveModelMetrics();
             await modelBuilder.SaveModel();
         }
 
