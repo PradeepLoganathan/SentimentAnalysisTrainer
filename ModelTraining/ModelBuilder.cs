@@ -9,6 +9,7 @@ using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms.Text;
 using ModelRepository;
 using static Microsoft.ML.DataOperationsCatalog;
+using System;
 
 namespace ModelTraining;
 
@@ -32,7 +33,7 @@ internal class ModelBuilder
 
     public ModelBuilder()
     {
-        wikiDetoxRepoPath = @"Data/wikiDetoxAnnotated40kRows.tsv";
+        wikiDetoxRepoPath = @"SentimentAnalysis/wikiDetoxAnnotated40kRows.tsv";
         wikiDetoxLocalFilePath = "wikiDetoxAnnotated40kRows.tsv";
         modelPath = "SentimentModel.zip";
         metricPath = "SentimentModel-Metrics.txt";
@@ -88,12 +89,14 @@ internal class ModelBuilder
 
         // Display model accuracy stats
         var metricdetails = ConsoleHelper.GetBinaryClassificationMetrics(trainer.ToString(), metrics);
+        metricdetails.Prepend(DateTime.UtcNow.ToLongDateString());
         File.WriteAllLines(metricPath, metricdetails);
+        
     }
 
     public async Task SaveModel()
     {
-       // mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
+       mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
        await modelRepo.UploadBlobStore(modelPath, metricPath);
         // await modelRepo.CreateZip(modelPath);
         // await modelRepo.CreateModelRelease(modelPath);

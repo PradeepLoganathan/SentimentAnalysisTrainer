@@ -20,15 +20,12 @@ namespace SentimentAnalysisConsoleApp
         {
             SettingsReader settingsReader = new SettingsReader();
             var repoToken = settingsReader.ReadSection<RepoToken>("GithubToken");
+            Github trainingDataRepo, modelRepo;
 
-            var trainingDataRepo = new Github(repoToken.Token);
-            trainingDataRepo.SetRepo("PradeepLoganathan", "SentimentAnalysisTrainer");
-            var modelRepo = new Github(repoToken.Token);
-            modelRepo.SetRepo("PradeepLoganathan", "ModelRepository");
+            SetTrainingDataRepo(repoToken, out trainingDataRepo, out modelRepo);
 
             ModelBuilder modelBuilder = new ModelBuilder(trainingDataRepo, modelRepo);
-            await modelBuilder.SaveModel();
-            
+
             await modelBuilder.LoadTrainingData();
             modelBuilder.TrainTestSplit();
             modelBuilder.PrepareData();
@@ -38,7 +35,14 @@ namespace SentimentAnalysisConsoleApp
             await modelBuilder.SaveModel();
         }
 
-       
+        private static void SetTrainingDataRepo(RepoToken repoToken, out Github trainingDataRepo, out Github modelRepo)
+        {
+            trainingDataRepo = new Github(repoToken.Token);
+            trainingDataRepo.SetRepo("PradeepLoganathan", "TrainingDataRepository");
+            modelRepo = new Github(repoToken.Token);
+            modelRepo.SetRepo("PradeepLoganathan", "ModelRepository");
+        }
+
         private static void TestPrediction(MLContext mlContext, ITransformer trainedModel)
         {
             // TRY IT: Make a single test prediction, loading the model from .ZIP file
