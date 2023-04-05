@@ -22,6 +22,7 @@ public class DataRepo
         
             File.WriteAllText(localFilePath, contents);
             Console.WriteLine("Training data accquired...");
+            
         }
         catch (Exception ex)
         {

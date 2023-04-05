@@ -93,7 +93,7 @@ internal class ModelBuilder
 
     public async Task SaveModel()
     {
-        System.Console.WriteLine("Saving trained");
+        System.Console.WriteLine("Saving trained model");
         mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
         await modelRepo.UploadModelVersion(modelPath);
         await modelRepo.UploadMetricVersion(metricPath);

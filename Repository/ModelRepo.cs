@@ -67,7 +67,7 @@ public class ModelRepo
 
             // Get the version ID for the new current version.
             string newVersionId = metadataResponse.Value.VersionId;
-            System.Console.WriteLine("Updated trained model version");
+            System.Console.WriteLine("Upload Complete ....Uploaded trained model version");
         }
     }
 }
