@@ -69,6 +69,7 @@ public class Github
 
     public async Task UploadBlobStore(string modelPath, string metricPath)
     {
+        System.Console.WriteLine("uploading saved model to blob store...");
         string connectionString = "DefaultEndpointsProtocol=https;AccountName=modelrepositoryprod;AccountKey=/oRe/ytUUWwonN3kZ9YtPytHKCav+SizB6516u/6We9yxOU9cz3Z7ZforJE6OUssYMW4eQItB09h+AStk38oVA==;EndpointSuffix=core.windows.net";
         string modelContainerName = "modelrepositoryprod";
         string modelBlobName = "sentimentanalysismodel";
@@ -83,7 +84,7 @@ public class Github
         {
             BlobClient blobClient = containerClient.GetBlobClient(modelBlobName);
             await blobClient.UploadAsync(zipStream, true);
-
+            System.Console.WriteLine("Uplaoded model to azure blob store");
              // Update the blob's metadata to trigger the creation of a new version.
             Dictionary<string, string> metadata = new Dictionary<string, string>
             {
@@ -96,6 +97,7 @@ public class Github
 
             // Get the version ID for the new current version.
             string newVersionId = metadataResponse.Value.VersionId;
+            System.Console.WriteLine("Updated trained model version");
         }
 
         BlobServiceClient metricBlobServiceClient = new BlobServiceClient(connectionString);
@@ -105,7 +107,7 @@ public class Github
         {
             BlobClient blobClient = metricContainerClient.GetBlobClient(metricBlobName);
             await blobClient.UploadAsync(metricPath, true);
-
+            System.Console.WriteLine("uploaded model metrics");
             // Update the blob's metadata to trigger the creation of a new version.
             Dictionary<string, string> metadata = new Dictionary<string, string>
             {
@@ -118,6 +120,7 @@ public class Github
 
             // Get the version ID for the new current version.
             string newVersionId = metadataResponse.Value.VersionId;
+            System.Console.WriteLine("Updated model metrics version");
 
         }
 
@@ -281,29 +284,32 @@ public class Github
 
         try
         {
-            // Get the content of the file from the repo
-            var contents = await _client.Repository.Content.GetAllContents(_owner,
-                _repoName,
-                repoFilePath);
-            var downloadurl = contents[0].DownloadUrl;
+            // // Get the content of the file from the repo
+            // var contents = await _client.Repository.Content.GetAllContents(_owner,
+            //     _repoName,
+            //     repoFilePath);
+            // var downloadurl = contents[0].DownloadUrl;
 
-            using (var client = new HttpClient())
-            {
-                using (var response = await client.GetAsync(downloadurl))
-                {
-                    using (var content = response.Content)
-                    {
-                        using (var stream = await content.ReadAsStreamAsync())
-                        {
-                            using (var fileStream = new FileStream(localFilePath, System.IO.FileMode.Create, FileAccess.Write))
-                            {
-                                stream.CopyTo(fileStream);
-                            }
-                        }
-                    }
-                }
-            }
-
+            // using (var client = new HttpClient())
+            // {
+            //     using (var response = await client.GetAsync(downloadurl))
+            //     {
+            //         using (var content = response.Content)
+            //         {
+            //             using (var stream = await content.ReadAsStreamAsync())
+            //             {
+            //                 using (var fileStream = new FileStream(localFilePath, System.IO.FileMode.Create, FileAccess.Write))
+            //                 {
+            //                     stream.CopyTo(fileStream);
+            //                 }
+            //             }
+            //         }
+            //     }
+            // }
+            var contents = await new HttpClient()
+                .GetStringAsync("https://raw.githubusercontent.com/PradeepLoganathan/TrainingDataRepository/main/SentimentAnalysis/wikiDetoxAnnotated40kRows.tsv");
+        
+            File.WriteAllText(localFilePath, contents);
             Console.WriteLine($"Read file {localFilePath} from {_owner}/{_repoName}.");
 
         }

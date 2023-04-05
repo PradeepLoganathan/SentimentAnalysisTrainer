@@ -62,12 +62,14 @@ internal class ModelBuilder
 
     public void Train()
     {
+        Console.WriteLine($"Starting training...");
         // Select algorithm and configure model builder                            
         trainer = mlContext.BinaryClassification.Trainers.SdcaLogisticRegression(labelColumnName: "Label", featureColumnName: "Features");
         var trainingPipeline = dataProcessPipeline.Append(trainer);
 
         // Train the model
         trainedModel = trainingPipeline.Fit(trainingData);
+        System.Console.WriteLine("Completed Training..");
         
     }
 
@@ -83,6 +85,7 @@ internal class ModelBuilder
 
     public void CreateModelMetrics()
     {
+        System.Console.WriteLine("Printing model metrics...");
         // Evaluate the model
         var predictions = trainedModel.Transform(testData);
         var metrics = mlContext.BinaryClassification.Evaluate(data: predictions, labelColumnName: "Label", scoreColumnName: "Score");
@@ -91,13 +94,15 @@ internal class ModelBuilder
         var metricdetails = ConsoleHelper.GetBinaryClassificationMetrics(trainer.ToString(), metrics);
         metricdetails.Prepend(DateTime.UtcNow.ToLongDateString());
         File.WriteAllLines(metricPath, metricdetails);
+        System.Console.WriteLine("Completed printing model metrics");
         
     }
 
     public async Task SaveModel()
     {
-       mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
-       await modelRepo.UploadBlobStore(modelPath, metricPath);
+        System.Console.WriteLine("Saving trained model");
+        mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
+        await modelRepo.UploadBlobStore(modelPath, metricPath);
         // await modelRepo.CreateZip(modelPath);
         // await modelRepo.CreateModelRelease(modelPath);
     }
