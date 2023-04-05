@@ -7,7 +7,7 @@ using DataStructures;
 using Microsoft.ML;
 using Microsoft.ML.Trainers;
 using Microsoft.ML.Transforms.Text;
-using ModelRepository;
+using Repository;
 using static Microsoft.ML.DataOperationsCatalog;
 using System;
 
@@ -16,35 +16,28 @@ namespace ModelTraining;
 internal class ModelBuilder
 {
     MLContext mlContext;
-    string wikiDetoxRepoPath, wikiDetoxLocalFilePath, modelPath, metricPath;
+  
+    string dataFilePath = "wikiDetoxAnnotated40kRows.tsv";
+    string modelPath = "SentimentModel.zip";
+    string metricPath = "SentimentModel-Metrics.txt";
     IDataView dataView, trainingData, testData;
     ITransformer trainedModel;
-    Github trainingDataRepo, modelRepo;
+    ModelRepo modelRepo;
+    DataRepo dataRepo;
     TextFeaturizingEstimator dataProcessPipeline;
-
     SdcaLogisticRegressionBinaryTrainer trainer;
-
-    public ModelBuilder(Github TrainingDataRepo, Github ModelRepo):this()
-    {
-        trainingDataRepo = TrainingDataRepo;
-        modelRepo = ModelRepo;
-        mlContext = new MLContext(seed: 1);
-    }
 
     public ModelBuilder()
     {
-        wikiDetoxRepoPath = @"SentimentAnalysis/wikiDetoxAnnotated40kRows.tsv";
-        wikiDetoxLocalFilePath = "wikiDetoxAnnotated40kRows.tsv";
-        modelPath = "SentimentModel.zip";
-        metricPath = "SentimentModel-Metrics.txt";
-
+        mlContext = new MLContext(seed: 1);
+        dataRepo = new DataRepo();
+        modelRepo = new ModelRepo();
     }
 
     public async Task LoadTrainingData()
     {
-
-        await trainingDataRepo.ReadFile(wikiDetoxRepoPath, wikiDetoxLocalFilePath);
-        dataView = mlContext.Data.LoadFromTextFile<SentimentIssue>(wikiDetoxLocalFilePath, hasHeader: true);
+        await dataRepo.GetTrainingData(dataFilePath);
+        dataView = mlContext.Data.LoadFromTextFile<SentimentIssue>(dataFilePath, hasHeader: true);
     }
 
     public void TrainTestSplit()
@@ -100,11 +93,10 @@ internal class ModelBuilder
 
     public async Task SaveModel()
     {
-        System.Console.WriteLine("Saving trained model");
+        System.Console.WriteLine("Saving trained");
         mlContext.Model.Save(trainedModel, trainingData.Schema, modelPath);
-        await modelRepo.UploadBlobStore(modelPath, metricPath);
-        // await modelRepo.CreateZip(modelPath);
-        // await modelRepo.CreateModelRelease(modelPath);
+        await modelRepo.UploadModelVersion(modelPath);
+        await modelRepo.UploadMetricVersion(metricPath);
     }
 
 }

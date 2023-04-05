@@ -1,31 +1,17 @@
 ﻿using System;
-using System.IO;
 using Microsoft.ML;
-using static Microsoft.ML.DataOperationsCatalog;
-using Microsoft.ML.Trainers;
-using System.Net.Http;
 using System.Threading.Tasks;
-
-using Common;
 using DataStructures;
-using ModelRepository;
 using ModelTraining;
 
 namespace SentimentAnalysisConsoleApp
 {
     internal static class Program
     {
-
         static async Task Main(string[] args)
         {
-            SettingsReader settingsReader = new SettingsReader();
-            var repoToken = settingsReader.ReadSection<RepoToken>("GithubToken");
-            Github trainingDataRepo, modelRepo;
-
-            SetTrainingDataRepo(repoToken, out trainingDataRepo, out modelRepo);
-
-            ModelBuilder modelBuilder = new ModelBuilder(trainingDataRepo, modelRepo);
-
+           
+            ModelBuilder modelBuilder = new ModelBuilder();
             await modelBuilder.LoadTrainingData();
             modelBuilder.TrainTestSplit();
             modelBuilder.PrepareData();
@@ -35,19 +21,10 @@ namespace SentimentAnalysisConsoleApp
             await modelBuilder.SaveModel();
         }
 
-        private static void SetTrainingDataRepo(RepoToken repoToken, out Github trainingDataRepo, out Github modelRepo)
-        {
-            trainingDataRepo = new Github(repoToken.Token);
-            trainingDataRepo.SetRepo("PradeepLoganathan", "TrainingDataRepository");
-            modelRepo = new Github(repoToken.Token);
-            modelRepo.SetRepo("PradeepLoganathan", "ModelRepository");
-        }
-
         private static void TestPrediction(MLContext mlContext, ITransformer trainedModel)
         {
             // TRY IT: Make a single test prediction, loading the model from .ZIP file
             SentimentIssue sampleStatement = new SentimentIssue { Text = "He is an amazing person!" };
-
             // Create prediction engine related to the loaded trained model
             var predEngine = mlContext.Model.CreatePredictionEngine<SentimentIssue, SentimentPrediction>(trainedModel);
 
@@ -59,15 +36,6 @@ namespace SentimentAnalysisConsoleApp
             Console.WriteLine($"================End of Process.Hit any key to exit==================================");
             Console.ReadLine();
         }
-
-        public static string GetAbsolutePath(string relativePath)
-        {
-            FileInfo _dataRoot = new FileInfo(typeof(Program).Assembly.Location);
-            string assemblyFolderPath = _dataRoot.Directory.FullName;
-
-            string fullPath = Path.Combine(assemblyFolderPath, relativePath);
-
-            return fullPath;
-        }
+      
     }
 }
