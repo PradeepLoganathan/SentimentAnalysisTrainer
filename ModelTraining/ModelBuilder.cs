@@ -81,7 +81,7 @@ internal class ModelBuilder
         ConsoleHelper.PrintBinaryClassificationMetrics(trainer.ToString(), metrics);
     }
 
-    public void SaveModelMetrics()
+    public void CreateModelMetrics()
     {
         // Evaluate the model
         var predictions = trainedModel.Transform(testData);

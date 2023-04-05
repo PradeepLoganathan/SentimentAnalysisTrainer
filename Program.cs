@@ -31,7 +31,7 @@ namespace SentimentAnalysisConsoleApp
             modelBuilder.PrepareData();
             modelBuilder.Train();
             modelBuilder.PrintModelMetrics();
-            modelBuilder.SaveModelMetrics();
+            modelBuilder.CreateModelMetrics();
             await modelBuilder.SaveModel();
         }
 

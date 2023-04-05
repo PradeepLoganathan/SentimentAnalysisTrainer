@@ -6,7 +6,9 @@ using System.Threading.Tasks;
 using System.Net.Http;
 using Azure.Storage.Blobs;
 using System.IO.Compression;
-
+using System.Collections.Generic;
+using Azure;
+using Azure.Storage.Blobs.Models;
 
 namespace ModelRepository;
 public class Github
@@ -81,6 +83,19 @@ public class Github
         {
             BlobClient blobClient = containerClient.GetBlobClient(modelBlobName);
             await blobClient.UploadAsync(zipStream, true);
+
+             // Update the blob's metadata to trigger the creation of a new version.
+            Dictionary<string, string> metadata = new Dictionary<string, string>
+            {
+                { "author", "PradeepLoganathan" },
+                { "datetime", DateTime.UtcNow.ToLongDateString() }
+            };
+
+            Response<BlobInfo> metadataResponse = 
+                await blobClient.SetMetadataAsync(metadata);
+
+            // Get the version ID for the new current version.
+            string newVersionId = metadataResponse.Value.VersionId;
         }
 
         BlobServiceClient metricBlobServiceClient = new BlobServiceClient(connectionString);
@@ -90,7 +105,23 @@ public class Github
         {
             BlobClient blobClient = metricContainerClient.GetBlobClient(metricBlobName);
             await blobClient.UploadAsync(metricPath, true);
+
+            // Update the blob's metadata to trigger the creation of a new version.
+            Dictionary<string, string> metadata = new Dictionary<string, string>
+            {
+                { "author", "PradeepLoganathan" },
+                { "datetime", DateTime.UtcNow.ToLongDateString() }
+            };
+
+            Response<BlobInfo> metadataResponse = 
+                await blobClient.SetMetadataAsync(metadata);
+
+            // Get the version ID for the new current version.
+            string newVersionId = metadataResponse.Value.VersionId;
+
         }
+
+        
     }
 
     public async Task CreateZip(string filePath)
