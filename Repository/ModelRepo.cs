@@ -36,7 +36,7 @@ public class ModelRepo
 
             // Get the version ID for the new current version.
             string newVersionId = metadataResponse.Value.VersionId;
-            System.Console.WriteLine("Updated model metrics version");
+            System.Console.WriteLine($"Updated model metrics version - {newVersionId}..");
         }
 
     }
@@ -46,28 +46,30 @@ public class ModelRepo
         string connectionString = "DefaultEndpointsProtocol=https;AccountName=modelrepositoryprod;AccountKey=/oRe/ytUUWwonN3kZ9YtPytHKCav+SizB6516u/6We9yxOU9cz3Z7ZforJE6OUssYMW4eQItB09h+AStk38oVA==;EndpointSuffix=core.windows.net";
         string modelContainerName = "modelrepositoryprod";
         string modelBlobName = "sentimentanalysismodel";
+        string initalVersionId;
 
         BlobServiceClient blobServiceClient = new BlobServiceClient(connectionString);
         BlobContainerClient containerClient = blobServiceClient.GetBlobContainerClient(modelContainerName);
+        BlobClient blobClient = containerClient.GetBlobClient(modelBlobName);
 
         using (FileStream zipStream = new FileStream(modelPath, System.IO.FileMode.Open))
         {
-            BlobClient blobClient = containerClient.GetBlobClient(modelBlobName);
-            await blobClient.UploadAsync(zipStream, true);
-            System.Console.WriteLine("Uplaoded model to azure blob store");
-             // Update the blob's metadata to trigger the creation of a new version.
-            Dictionary<string, string> metadata = new Dictionary<string, string>
-            {
-                { "author", "PradeepLoganathan" },
-                { "datetime", DateTime.UtcNow.ToLongDateString() }
-            };
-
-            Response<BlobInfo> metadataResponse = 
-                await blobClient.SetMetadataAsync(metadata);
-
-            // Get the version ID for the new current version.
-            string newVersionId = metadataResponse.Value.VersionId;
-            System.Console.WriteLine("Upload Complete ....Uploaded trained model version");
+            Response<BlobContentInfo> uploadResponse = await blobClient.UploadAsync(zipStream, true);
+            System.Console.WriteLine("Uploaded model to azure blob store");
+            initalVersionId = uploadResponse.Value.VersionId;
         }
+         // Update the blob's metadata to trigger the creation of a new version.
+        Dictionary<string, string> metadata = new Dictionary<string, string>
+        {
+            { "author", "PradeepLoganathan" },
+            { "datetime", DateTime.UtcNow.ToLongDateString() }
+        };
+
+        Response<BlobInfo> metadataResponse = 
+            await blobClient.SetMetadataAsync(metadata);
+        // Get the version ID for the new current version.
+        string newVersionId = metadataResponse.Value.VersionId;
+        System.Console.WriteLine($"Upload Complete ....Uploaded trained model version {newVersionId}.. prrvious version {initalVersionId}");
+            
     }
 }
